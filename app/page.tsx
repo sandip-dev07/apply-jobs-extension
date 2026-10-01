@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Check, Database } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, Database, Download, ExternalLink } from "lucide-react";
 import { ChromeIcon, FirefoxIcon } from "@/components/browser-icons";
+import { LogoMark } from "@/components/logo";
+import { CHROME_WEB_STORE_URL, FIREFOX_ADDONS_URL } from "@/lib/stores";
 
-const container = "mx-auto w-full max-w-5xl px-6";
+const container = "mx-auto w-full max-w-5xl px-4 sm:px-6";
 const btnPrimary =
   "inline-flex items-center justify-center gap-1.5 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-carbon";
 const btnGhost =
@@ -82,8 +84,9 @@ export default function Home() {
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-line bg-white/70 backdrop-blur-[13px]">
         <div className={`${container} flex h-14 items-center justify-between`}>
-          <Link href="/" className="font-display text-xl font-medium tracking-tight">
-            Job&nbsp;Tracker
+          <Link href="/" className="flex items-center gap-2 font-display text-xl font-medium tracking-tight">
+            <LogoMark size={24} />
+            Docket
           </Link>
           <nav className="hidden items-center gap-6 text-sm text-smoke lg:flex">
             <Link className="transition-colors hover:text-ink" href="#receipts">Receipts</Link>
@@ -108,13 +111,13 @@ export default function Home() {
             <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-smoke">
               Browser extension <span className="text-ash">/</span> Chrome &amp; Firefox
             </p>
-            <h1 className="mt-5 font-display text-5xl font-medium leading-[1.08] tracking-tight md:text-[3.5rem]">
+            <h1 className="mt-5 font-display text-4xl font-medium leading-[1.08] tracking-tight sm:text-5xl md:text-[3.5rem]">
               Hit Apply.
               <br />
               It&apos;s already in <span className="marker-gold">Notion.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-smoke">
-              Job Tracker catches the second your application goes through, then files the
+              Docket catches the second your application goes through, then files the
               company, role, link, status, and description to your database. Nothing to type,
               nothing to remember.
             </p>
@@ -165,7 +168,7 @@ export default function Home() {
       <section id="receipts" className="scroll-mt-20 border-b border-line">
         <div className={`${container} py-16 md:py-24`}>
           <SectionLabel no="01">The receipt box</SectionLabel>
-          <h2 className="mt-3 max-w-xl font-display text-4xl font-medium tracking-tight md:text-5xl">
+          <h2 className="mt-3 max-w-xl font-display text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">
             A month of applying, on one screen.
           </h2>
           <p className="mt-4 max-w-xl leading-relaxed text-smoke">
@@ -208,7 +211,7 @@ export default function Home() {
       <section id="how" className="scroll-mt-20 border-b border-line bg-mist/60">
         <div className={`${container} py-16 md:py-24`}>
           <SectionLabel no="02">How it works</SectionLabel>
-          <h2 className="mt-3 max-w-xl font-display text-4xl font-medium tracking-tight md:text-5xl">
+          <h2 className="mt-3 max-w-xl font-display text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">
             Three files do all the work.
           </h2>
           <div className="mt-10 max-w-3xl space-y-0">
@@ -235,7 +238,7 @@ export default function Home() {
         <div className={`${container} grid items-center gap-12 py-16 md:py-24 lg:grid-cols-2`}>
           <div>
             <SectionLabel no="03">The extension</SectionLabel>
-            <h2 className="mt-3 font-display text-4xl font-medium tracking-tight md:text-5xl">
+            <h2 className="mt-3 font-display text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">
               The popup is the whole control room.
             </h2>
             <p className="mt-4 max-w-md leading-relaxed text-smoke">
@@ -265,12 +268,35 @@ export default function Home() {
               when your backend is reachable.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-1.5 text-sm font-medium">
-                <ChromeIcon className="size-4" /> Chrome · Manifest V3
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-1.5 text-sm font-medium">
-                <FirefoxIcon className="size-4" /> Firefox 121+
-              </span>
+              <Link
+                href={CHROME_WEB_STORE_URL || "#install"}
+                {...(CHROME_WEB_STORE_URL ? { target: "_blank", rel: "noreferrer" } : {})}
+                className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-mist"
+              >
+                <ChromeIcon className="size-4" /> Chrome Web Store
+                {CHROME_WEB_STORE_URL ? <ExternalLink className="size-3.5 text-smoke" /> : null}
+              </Link>
+              <Link
+                href={FIREFOX_ADDONS_URL || "#install"}
+                {...(FIREFOX_ADDONS_URL ? { target: "_blank", rel: "noreferrer" } : {})}
+                className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-mist"
+              >
+                <FirefoxIcon className="size-4" /> Firefox Add-ons
+                {FIREFOX_ADDONS_URL ? <ExternalLink className="size-3.5 text-smoke" /> : null}
+              </Link>
+            </div>
+            <div className="mt-4">
+              <p className="font-mono text-[11px] uppercase tracking-widest text-smoke">
+                Smart detectors
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {["LinkedIn", "Indeed", "Greenhouse", "Lever", "Ashby", "Workday", "iCIMS", "SmartRecruiters", "Taleo", "Glassdoor", "Wellfound", "ZipRecruiter", "Dice", "Monster", "Naukri"].map((s) => (
+                  <span key={s} className="rounded-md bg-white px-2 py-1 text-xs font-medium text-smoke ring-1 ring-line">
+                    {s}
+                  </span>
+                ))}
+                <span className="px-1 py-1 font-mono text-[11px] text-ash">+ generic fallback everywhere else</span>
+              </div>
             </div>
           </div>
           {/* Popup mock */}
@@ -278,7 +304,7 @@ export default function Home() {
             <div aria-hidden className="mx-auto h-5 w-24 rounded-t-md border border-b-0 border-line bg-mist" />
             <div className={`${card} p-4 shadow-[0_24px_60px_-24px_rgba(9,9,11,0.3)]`}>
               <div className="flex items-center justify-between">
-                <p className="font-semibold">Job Tracker</p>
+                <p className="font-semibold">Docket</p>
                 <span className="rounded-md bg-green-100 px-2 py-0.5 font-mono text-[11px] text-green-700">
                   saved to Notion
                 </span>
@@ -305,7 +331,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="mt-3 rounded-md bg-mist p-3 text-xs text-smoke">
-                Backend: localhost:3000 · Notion: connected
+                Notion: connected
               </div>
             </div>
             <p className="mt-3 text-center font-mono text-[11px] text-ash">popup.html — all 340 pixels of it</p>
@@ -315,7 +341,7 @@ export default function Home() {
       <section id="limits" className="scroll-mt-20 border-b border-line">
         <div className={`${container} py-16 md:py-24`}>
           <SectionLabel no="04">Honest limitations</SectionLabel>
-          <h2 className="mt-3 max-w-xl font-display text-4xl font-medium tracking-tight md:text-5xl">
+          <h2 className="mt-3 max-w-xl font-display text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">
             What it <span className="marker-gold">won&apos;t</span> do.
           </h2>
           <p className="mt-4 max-w-xl leading-relaxed text-smoke">
@@ -339,58 +365,97 @@ export default function Home() {
             <span className="text-peri-soft">05</span>
             <span className="text-white/20">{"  /  "}</span>Install
           </p>
-          <h2 className="mt-3 max-w-xl font-display text-4xl font-medium tracking-tight md:text-5xl">
-            Ten minutes, most of it Notion.
+          <h2 className="mt-3 max-w-xl font-display text-3xl font-medium tracking-tight sm:text-4xl md:text-5xl">
+            Install it like any other extension.
           </h2>
-          <div className="mt-10 grid max-w-4xl gap-4 lg:grid-cols-2">
-            <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-              <div className="flex items-center gap-2 border-b border-white/10 px-5 py-3">
-                <ChromeIcon className="size-4 text-white/80" />
-                <span className="font-mono text-[11px] text-white/60">Chrome — load unpacked</span>
+          <p className="mt-4 max-w-xl leading-relaxed text-white/60">
+            Add Docket from your
+            browser&apos;s store, sign in with Notion, pick a database — the
+            next Apply files itself.
+          </p>
+
+          {/* Store cards */}
+          <div className="mt-10 grid max-w-4xl gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.04] p-5 sm:p-6">
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-ink">
+                  <ChromeIcon className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">Chrome Web Store</p>
+                  <p className="font-mono text-[11px] text-white/50">Free · Manifest V3</p>
+                </div>
               </div>
-              <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-[1.9] text-white/80">
-                <code>
-                  chrome://extensions
-                  {"\n"}→ Developer mode → Load unpacked
-                  {"\n"}→ select ./extension/
-                </code>
-              </pre>
+              {CHROME_WEB_STORE_URL ? (
+                <Link
+                  href={CHROME_WEB_STORE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-white/90"
+                >
+                  <Download className="size-4" />
+                  Add to Chrome
+                </Link>
+              ) : (
+                <span className="inline-flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white/50">
+                  Add to Chrome — coming soon
+                </span>
+              )}
             </div>
-            <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-              <div className="flex items-center gap-2 border-b border-white/10 px-5 py-3">
-                <FirefoxIcon className="size-4 text-white/80" />
-                <span className="font-mono text-[11px] text-white/60">Firefox 121+ — temporary add-on</span>
+            <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-white/[0.04] p-5 sm:p-6">
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-ink">
+                  <FirefoxIcon className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">Firefox Add-ons</p>
+                  <p className="font-mono text-[11px] text-white/50">Free · Firefox 121+</p>
+                </div>
               </div>
-              <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-[1.9] text-white/80">
-                <code>
-                  about:debugging#/runtime/this-firefox
-                  {"\n"}→ Load Temporary Add-on
-                  {"\n"}→ select ./extension/manifest.json
-                </code>
-              </pre>
+              {FIREFOX_ADDONS_URL ? (
+                <Link
+                  href={FIREFOX_ADDONS_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-white/90"
+                >
+                  <Download className="size-4" />
+                  Get for Firefox
+                </Link>
+              ) : (
+                <span className="inline-flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white/50">
+                  Get for Firefox — coming soon
+                </span>
+              )}
             </div>
           </div>
-          <pre className="mt-4 max-w-4xl overflow-x-auto rounded-lg border border-white/10 bg-white/[0.04] p-5 font-mono text-[13px] leading-[1.9] text-white/80">
-            <code>
-              <span className="text-white/40"># then, in either browser</span>
-              {"\n"}open /settings → paste token + database id → Test connection
-              {"\n"}refresh your job tabs — the next Apply files itself
-            </code>
-          </pre>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/settings"
-              className="inline-flex items-center justify-center rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-ink hover:bg-white/90"
-            >
-              Start with Settings
-            </Link>
-            <Link
-              href="/test-page"
-              className="inline-flex items-center justify-center rounded-lg border border-white/20 px-5 py-2.5 text-sm font-medium text-white hover:bg-white/10"
-            >
-              Rehearse on the mock page
-            </Link>
-          </div>
+
+          {/* Steps */}
+          <ol className="mt-4 grid max-w-4xl gap-4 md:grid-cols-3">
+            {[
+              {
+                no: "1",
+                title: "Add the extension",
+                body: "One click from the store. It updates itself from here on — never touch a folder again.",
+              },
+              {
+                no: "2",
+                title: "Sign in, pick a database",
+                body: "Sign in with Notion in Settings and choose where new applications go. The popup picks it up automatically.",
+              },
+              {
+                no: "3",
+                title: "Just apply",
+                body: "Refresh your job tabs once. The next confirmation page files the row to Notion in seconds.",
+              },
+            ].map((s) => (
+              <li key={s.no} className="rounded-xl border border-white/10 bg-white/[0.04] p-5">
+                <p className="font-display text-2xl text-peri-soft">{s.no}</p>
+                <p className="mt-2 font-medium">{s.title}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-white/60">{s.body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
@@ -427,7 +492,7 @@ export default function Home() {
         </div>
         <footer className="border-t border-line">
           <div className={`${container} flex flex-col items-center justify-between gap-3 py-8 text-sm text-smoke sm:flex-row`}>
-            <span>Job Tracker — built for one job seeker, shared in case it helps a second.</span>
+            <span>Docket — built for one job seeker, shared in case it helps a second.</span>
             <nav className="flex items-center gap-5">
               <Link className="inline-flex items-center gap-1 transition-colors hover:text-ink" href="/dashboard">
                 Dashboard <ArrowUpRight className="size-3.5" />

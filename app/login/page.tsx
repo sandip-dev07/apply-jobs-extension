@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LogoMark } from "@/components/logo";
 
 export default function LoginPage() {
   const [next, setNext] = useState("/dashboard");
@@ -12,6 +13,8 @@ export default function LoginPage() {
       const qs = new URLSearchParams(window.location.search);
       const n = qs.get("next");
       if (n && n.startsWith("/") && !n.startsWith("//") && !n.includes("://")) {
+        // One-time read of the query string on mount.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setNext(n);
       }
     } catch {
@@ -21,11 +24,14 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-16">
-      <div className="mb-8 text-center">
-        <p className="font-display text-2xl font-medium tracking-tight">Job&nbsp;Tracker</p>
-        <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] text-smoke">
-          Sign in to continue
-        </p>
+      <div className="mb-8 flex flex-col items-center gap-3 text-center">
+        <LogoMark size={40} />
+        <div>
+          <p className="font-display text-2xl font-medium tracking-tight">Docket</p>
+          <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.22em] text-smoke">
+            Sign in to continue
+          </p>
+        </div>
       </div>
       <Card>
         <CardHeader>
@@ -38,10 +44,6 @@ export default function LoginPage() {
           <Button render={<a href={`/api/notion/auth?next=${encodeURIComponent(next)}`} />}>
             Sign in with Notion
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Uses your Notion workspace directly — no passwords or tokens to manage here.
-            OAuth needs a public integration (see README).
-          </p>
         </CardContent>
       </Card>
     </main>

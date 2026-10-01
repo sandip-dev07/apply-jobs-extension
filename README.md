@@ -1,4 +1,4 @@
-# Job Tracker
+# Docket
 
 A personal job application tracker: a browser extension (Chrome + Firefox) that
 notices the moment you apply for a job and files it in your Notion database, plus
@@ -62,8 +62,8 @@ Statuses: `Applied, Interview, Assessment, Offer, Rejected, Ghosted, Withdrawn`.
 
 ### Extension setup
 
-See [`extension/README.md`](extension/README.md) for Chrome (`chrome://extensions` →
-Load unpacked) and Firefox (`about:debugging` → Load Temporary Add-on) instructions.
+See [`extension/README.md`](extension/README.md) to install from the Chrome Web Store /
+Firefox Add-ons (or load unpacked for local development).
 
 ## Scripts
 

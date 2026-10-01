@@ -1,4 +1,4 @@
-Build a personal Job Application Tracker Chrome Extension.
+Build Docket, a personal job application tracker (Chrome + Firefox extension).
 
 Goal:
 Whenever I apply for a job, detect the application automatically, extract the job details, and save the application to my Notion database so I never forget where I applied.

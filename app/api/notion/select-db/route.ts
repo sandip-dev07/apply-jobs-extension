@@ -37,6 +37,7 @@ export async function POST(req: Request) {
   }
   const res = NextResponse.json({ ok: true, databaseId: body.databaseId.trim() });
   res.cookies.set("nt_db", body.databaseId.trim(), {
+    httpOnly: true,
     secure: isProd,
     sameSite: "lax",
     path: "/",

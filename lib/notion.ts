@@ -28,16 +28,32 @@ export function readCookie(req: Request, name: string): string | null {
 /**
  * Credentials with login-cookie fallback: explicit request values first,
  * then the OAuth login cookies, then env vars.
+ *
+ * Multi-user safety: the shared env credentials are only usable by callers
+ * who prove a login session (nt_token cookie) or pass their own explicit
+ * token. Anonymous callers never borrow the deployment owner's token —
+ * otherwise anyone could read/write the owner's Notion database.
  */
 export function resolveCredentialsFromRequest(
   req: Request,
   input?: Partial<NotionCredentials>
 ): NotionCredentials | null {
-  return resolveCredentials({
-    token: input?.token?.trim() || readCookie(req, NOTION_TOKEN_COOKIE) || undefined,
-    databaseId:
-      input?.databaseId?.trim() || readCookie(req, NOTION_DB_COOKIE) || undefined,
-  });
+  const explicitToken = input?.token?.trim() || "";
+  const hasSession = !!readCookie(req, NOTION_TOKEN_COOKIE);
+  return resolveCredentials(
+    {
+      token: explicitToken || readCookie(req, NOTION_TOKEN_COOKIE) || undefined,
+      databaseId:
+        input?.databaseId?.trim() || readCookie(req, NOTION_DB_COOKIE) || undefined,
+    },
+    { allowEnv: hasSession || !!explicitToken }
+  );
+}
+
+/** Token for user-scoped endpoints: explicit body token or login cookie only.
+ *  Never the shared env token — anonymous callers must not borrow it. */
+export function resolveUserToken(req: Request, bodyToken?: string): string {
+  return bodyToken?.trim() || readCookie(req, NOTION_TOKEN_COOKIE) || "";
 }
 
 export function workspaceFromRequest(req: Request): string | null {
@@ -49,14 +65,20 @@ export function readStateCookie(req: Request): string | null {
 }
 
 /** Resolve credentials: explicit values first, then env. Returns null when missing. */
-export function resolveCredentials(input?: Partial<NotionCredentials>): NotionCredentials | null {
-  const token =
-    input?.token?.trim() ||
-    process.env.NOTION_TOKEN?.trim() ||
-    process.env.NOTION_API_KEY?.trim() ||
-    "";
-  const rawDb =
-    input?.databaseId?.trim() || process.env.NOTION_DATABASE_ID?.trim() || "";
+export function resolveCredentials(
+  input?: Partial<NotionCredentials>,
+  opts?: { allowEnv?: boolean }
+): NotionCredentials | null {
+  const explicitToken = input?.token?.trim() || "";
+  const explicitDb = input?.databaseId?.trim() || "";
+  const envAllowed = opts?.allowEnv !== false;
+  const envToken =
+    (envAllowed && (process.env.NOTION_TOKEN?.trim() || process.env.NOTION_API_KEY?.trim())) || "";
+  const envDb = (envAllowed && process.env.NOTION_DATABASE_ID?.trim()) || "";
+  const token = explicitToken || envToken;
+  // The shared env database belongs to the env-token owner only: never pair
+  // another caller's token with it, or users would read/write each other's data.
+  const rawDb = explicitDb || (!explicitToken && token ? envDb : "");
   // Accept full Notion URLs too: extract 32-hex-char id.
   const m = rawDb.match(/[0-9a-f]{32}/i) ?? rawDb.match(/[0-9a-f-]{36}/i);
   const databaseId = m ? m[0] : rawDb;
@@ -134,7 +156,7 @@ const STATUS_COLORS: Record<string, string> = {
   Withdrawn: "default",
 };
 
-/** The Job Tracker schema used when creating a database from the app. */
+/** The Docket schema used when creating a database from the app. */
 export function jobTrackerSchema() {
   return {
     Name: { title: {} },

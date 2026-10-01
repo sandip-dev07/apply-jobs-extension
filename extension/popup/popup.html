@@ -7,8 +7,19 @@
 <body>
   <div class="wrap">
     <div class="head">
-      <h1>Job Tracker</h1>
-      <span class="ver">v0.1.0</span>
+      <span class="brandwrap"><img class="brand" src="../icons/icon48.png" alt="" width="22" height="22" /><h1>Docket</h1></span>
+      <span class="headright">
+        <span id="pill" class="pill hidden">Notion</span>
+        <span class="menuwrap">
+          <button id="btnMenu" class="iconbtn" aria-label="Menu" aria-haspopup="menu" aria-expanded="false">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg>
+          </button>
+          <span id="menu" class="menu hidden" role="menu">
+            <button id="menuDashboard" class="menuitem" role="menuitem">Open dashboard</button>
+            <button id="menuLogout" class="menuitem danger" role="menuitem">Log out</button>
+          </span>
+        </span>
+      </span>
     </div>
 
     <div id="signinCard" class="card accent hidden">
@@ -21,7 +32,7 @@
 
     <div id="status" class="status">Loading…</div>
 
-    <div id="pending" class="card accent hidden">
+    <!-- <div id="pending" class="card signedin-only hidden">
       <b>Possible application detected</b>
       <div id="pendingJob" class="muted"></div>
       <div class="row">
@@ -34,14 +45,13 @@
           Ignore
         </button>
       </div>
-    </div>
+    </div> -->
 
-    <div class="card">
+    <div class="card signedin-only">
       <div class="counts"><b>Today: <span id="today">0</span> · Total: <span id="total">0</span></b></div>
-      <div id="recent"></div>
     </div>
 
-    <div id="jobCard" class="card hidden">
+    <div id="jobCard" class="card signedin-only hidden">
       <b>Current page job</b>
       <div id="current" class="muted"></div>
       <div class="row">
@@ -52,32 +62,24 @@
       </div>
     </div>
 
-    <details class="card">
+    <details class="card signedin-only">
       <summary>Can&apos;t detect it? Enter manually</summary>
-      <input id="fCompany" placeholder="Company" />
-      <input id="fTitle" placeholder="Job title" />
-      <input id="fUrl" placeholder="Job URL" />
-      <input id="fLocation" placeholder="Location" />
+      <div class="fields">
+        <input id="fCompany" placeholder="Company" />
+        <input id="fTitle" placeholder="Job title" />
+        <input id="fUrl" placeholder="Job URL" />
+        <input id="fLocation" placeholder="Location" />
+      </div>
       <button id="btnManual" class="primary">Save application</button>
     </details>
 
-    <details class="card" id="settingsCard">
+    <details class="card signedin-only" id="settingsCard">
       <summary>Settings</summary>
-      <div id="backendLine" class="muted">Detecting backend…</div>
       <div id="sessionArea"></div>
       <div class="row">
         <button id="btnTest">Test connection</button>
         <button id="btnOpenNotion">Open Notion</button>
       </div>
-      <details>
-        <summary class="sub">Custom backend URL</summary>
-        <input id="sBackendCustom" placeholder="https://your-app.vercel.app" />
-        <div class="row">
-          <button id="btnBackendSave" class="primary">Use custom backend</button>
-          <button id="btnBackendAuto">Auto-detect</button>
-        </div>
-        <div class="muted">Only needed for a deployed backend. Local development is detected automatically.</div>
-      </details>
     </details>
 
     <div id="msg" class="muted"></div>

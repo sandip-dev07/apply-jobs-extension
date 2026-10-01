@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import {
   createDatabase,
   extractNotionId,
-  readCookie,
-  NOTION_TOKEN_COOKIE,
+  resolveUserToken,
 } from "@/lib/notion";
 
 export const runtime = "nodejs";
@@ -22,8 +21,7 @@ export async function POST(req: Request) {
   } catch {
     body = {};
   }
-  const token =
-    readCookie(req, NOTION_TOKEN_COOKIE) || process.env.NOTION_TOKEN?.trim() || "";
+  const token = resolveUserToken(req);
   if (!token) return NextResponse.json({ ok: false, error: "Sign in with Notion first." }, { status: 401 });
 
   const parentId = body.parentPageId ? extractNotionId(body.parentPageId) : null;
@@ -48,6 +46,7 @@ export async function POST(req: Request) {
   const out = NextResponse.json({ ok: true, databaseId: data?.id ?? null, url: data?.url ?? null });
   if (data?.id) {
     out.cookies.set("nt_db", data.id, {
+      httpOnly: true,
       secure: isProd,
       sameSite: "lax",
       path: "/",

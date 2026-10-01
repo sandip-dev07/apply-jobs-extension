@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { flattenPageProperties, getDatabaseSchema, listRecentPages, resolveCredentialsFromRequest, workspaceFromRequest } from "@/lib/notion";
+import { flattenPageProperties, getDatabaseSchema, listRecentPages, resolveCredentialsFromRequest } from "@/lib/notion";
 
 export const runtime = "nodejs";
 

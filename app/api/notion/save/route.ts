@@ -68,6 +68,14 @@ export async function POST(req: Request) {
     ? (body.status as ApplicationStatus)
     : "Applied";
 
+  // appliedDate must survive `new Date(...).toISOString()` in buildProperties —
+  // fall back to now on garbage input instead of throwing a 500.
+  const parsedDate = body.appliedDate ? new Date(body.appliedDate) : null;
+  const appliedDate =
+    parsedDate && !Number.isNaN(parsedDate.getTime())
+      ? parsedDate.toISOString()
+      : new Date().toISOString();
+
   const app = {
     company,
     title,
@@ -77,7 +85,7 @@ export async function POST(req: Request) {
     applicationUrl: body.applicationUrl?.trim() || jobUrl,
     source: body.source?.trim() || "",
     status,
-    appliedDate: body.appliedDate || new Date().toISOString(),
+    appliedDate,
     notes: body.notes?.trim() || "",
   };
 

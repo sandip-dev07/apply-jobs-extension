@@ -1,4 +1,4 @@
-/* Job Application Tracker — background service worker (MV3, vanilla JS).
+/* Docket — background service worker (MV3, vanilla JS).
  * Holds settings + application log in extension local storage, forwards saves to the Next.js backend
  * so the Notion token stays out of page contexts. Extension storage is still user-local (personal MVP).
  */
@@ -6,6 +6,11 @@
 
 // Cross-browser API: Firefox exposes promise-based `browser.*`, Chrome exposes `chrome.*`.
 var ext = (typeof browser !== "undefined" && browser && browser.runtime) ? browser : chrome;
+
+// Bump when the popup↔worker message protocol changes. The popup compares
+// this against its EXPECTED_WORKER to detect a stale worker (fresh popup
+// talking to a pre-reload background) and say so instead of a dead-end error.
+var WORKER_VERSION = 3;
 
 var DEFAULT_STATE = {
   settings: {
@@ -113,8 +118,12 @@ function notify(title, message) {
  * Backend resolution — no input required. A stored custom URL always wins
  * (including legacy values from older installs); otherwise localhost:3000 is
  * probed and used when something answers there (any HTTP status counts).
+ * When nothing answers locally and PROD_BACKEND is set (do this before
+ * store publishing), the extension talks to the deployed app instead.
  */
 var LOCAL_BACKEND = "http://localhost:3000";
+// TODO(store-publish): paste the deployed app URL, e.g. "https://docket.vercel.app".
+var PROD_BACKEND = "";
 
 async function resolveBackend() {
   var state = await getState();
@@ -132,6 +141,7 @@ async function resolveBackend() {
     clearTimeout(timer);
     return { url: LOCAL_BACKEND, mode: "auto" };
   } catch (e) {
+    if (PROD_BACKEND) return { url: PROD_BACKEND.replace(/\/+$/, ""), mode: "prod" };
     return { url: LOCAL_BACKEND, mode: "auto-offline" };
   }
 }
@@ -269,6 +279,85 @@ async function saveApplication(job, confidence, silentSuccess) {
   }
 }
 
+/* Combined list for the popup: local log merged with the Notion database
+ * (via the dashboard login session), deduped by normalized key. This is what
+ * closes the dashboard ↔ extension gap — rows saved from the dashboard or
+ * another device show up here too. Always resolves; falls back to local-only
+ * when signed out, when no database is selected, or when offline. */
+function notionItemToApp(it) {
+  return {
+    company: it.company || "Unknown",
+    title: it.title || "Unknown role",
+    location: "",
+    description: "",
+    jobUrl: it.jobUrl || "",
+    applicationUrl: it.jobUrl || "",
+    source: "Notion",
+    status: it.status || "Applied",
+    appliedDate: it.createdTime || new Date().toISOString(),
+    savedAt: it.createdTime || new Date().toISOString(),
+    pageId: it.id || null,
+    deduped: false,
+    fromNotion: true,
+  };
+}
+
+async function combinedApplications() {
+  var state = await getState();
+  var local = state.applications || [];
+  var session = await sessionToken();
+  if (!session.token) return { ok: true, applications: local, notion: "signed-out" };
+  var dbId = (state.settings && (state.settings.databaseId || state.settings.notionDatabaseId)) || "";
+  if (!dbId) {
+    // Fall back to the dashboard's server-side selection (httpOnly cookie is
+    // readable here via the cookies permission even though page JS can't).
+    try {
+      var dbCookie = await ext.cookies.get({ url: session.backendUrl + "/", name: "nt_db" });
+      if (dbCookie && dbCookie.value) dbId = dbCookie.value;
+    } catch (e) { /* ignore */ }
+  }
+  if (!dbId) return { ok: true, applications: local, notion: "no-database" };
+  try {
+    var res = await fetch(session.backendUrl + "/api/notion/list", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageSize: 20, token: session.token, databaseId: dbId }),
+    });
+    var data = await res.json().catch(function () { return {}; });
+    if (!data || !data.ok || !data.items) return { ok: true, applications: local, notion: "unreachable" };
+    var byKey = {};
+    local.forEach(function (a) { byKey[dedupeKey(a)] = a; });
+    var merged = local.slice();
+    data.items.forEach(function (it) {
+      var app = notionItemToApp(it);
+      var k = dedupeKey(app);
+      if (byKey[k]) {
+        // Same record on both sides — backfill the Notion page id locally.
+        if (!byKey[k].pageId && app.pageId) byKey[k].pageId = app.pageId;
+      } else {
+        byKey[k] = app;
+        merged.push(app);
+      }
+    });
+    merged.sort(function (a, b) {
+      return new Date(b.savedAt || b.appliedDate || 0) - new Date(a.savedAt || a.appliedDate || 0);
+    });
+    // Persist page-id backfills so future saves dedupe against Notion rows.
+    try {
+      var cur = (await getState()).applications || [];
+      var touched = false;
+      cur.forEach(function (a) {
+        var m = byKey[dedupeKey(a)];
+        if (m && m.pageId && !a.pageId) { a.pageId = m.pageId; touched = true; }
+      });
+      if (touched) await setState({ applications: cur });
+    } catch (e) { /* best-effort */ }
+    return { ok: true, applications: merged.slice(0, 200), notion: "synced" };
+  } catch (e) {
+    return { ok: true, applications: local, notion: "unreachable" };
+  }
+}
+
 ext.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
   (async function () {
     if (!msg || !msg.type) return;
@@ -305,18 +394,79 @@ ext.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
       sendResponse(await saveApplication(msg.job, "high", false));
     } else if (msg.type === "GET_STATE") {
       sendResponse(await getState());
+    } else if (msg.type === "GET_COMBINED") {
+      sendResponse(await combinedApplications());
+    } else if (msg.type === "LOGOUT") {
+      // End the borrowed dashboard login: drop the session cookies so the
+      // extension (and the dashboard) sign out. Local log stays on-device.
+      try {
+        var lSession = await sessionToken();
+        var logoutBase = (lSession && lSession.backendUrl) || null;
+        if (logoutBase) {
+          for (var ci = 0; ci < ["nt_token", "nt_workspace", "nt_db"].length; ci++) {
+            try {
+              await ext.cookies.remove({ url: logoutBase + "/", name: ["nt_token", "nt_workspace", "nt_db"][ci] });
+            } catch (e) { /* keep clearing the rest */ }
+          }
+        }
+      } catch (e) { /* offline — nothing to clear remotely */ }
+      await setState({ lastStatus: "not signed in — use the card above." });
+      sendResponse({ ok: true });
+    } else if (msg.type === "TEST_CONNECTION") {      // Single networking path for connectivity checks: same resolved backend
+      // + session the save flow uses, so "Test" can never disagree with saves.
+      try {
+        var tSession = await sessionToken();
+        if (!tSession.token) {
+          sendResponse({ ok: false, error: "Not signed in — use the card at the top first.", backendUrl: tSession.backendUrl });
+          return;
+        }
+        var tRes = await fetch(tSession.backendUrl + "/api/notion/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: tSession.token }),
+        });
+        var tData = await tRes.json().catch(function () { return {}; });
+        if (tData && tData.ok) {
+          sendResponse({
+            ok: true,
+            backendUrl: tSession.backendUrl,
+            databases: (tData.databases || []).length,
+          });
+        } else {
+          sendResponse({
+            ok: false,
+            backendUrl: tSession.backendUrl,
+            error: (tData && tData.error) || ("HTTP " + tRes.status),
+          });
+        }
+      } catch (e) {
+        var sess2 = await sessionToken();
+        sendResponse({
+          ok: false,
+          backendUrl: sess2.backendUrl,
+          error: "Backend unreachable — is the app running at " + sess2.backendUrl + "?",
+          hint: "Dev: run `npm run dev`. Published app: set PROD_BACKEND in background/background.js.",
+        });
+      }
     } else if (msg.type === "GET_SESSION") {
       // Lets the popup borrow the dashboard login: never exposes the cookie
       // store, just hands over the current token for direct backend calls.
       var sess = await sessionToken();
       var st = await getState();
+      var dashDbId = "";
+      try {
+        var dbCookie = await ext.cookies.get({ url: sess.backendUrl + "/", name: "nt_db" });
+        if (dbCookie && dbCookie.value) dashDbId = dbCookie.value;
+      } catch (e) { /* ignore — popup falls back to a generic label */ }
       sendResponse({
         ok: true,
         signedIn: !!sess.token,
         token: sess.token,
         backendUrl: sess.backendUrl,
         backendMode: sess.mode,
+        workerVersion: WORKER_VERSION,
         databaseId: st.settings.databaseId || st.settings.notionDatabaseId || "",
+        dashboardDbId: dashDbId,
       });
     } else if (msg.type === "SAVE_SETTINGS") {
       var prev = (await getState()).settings || {};
@@ -340,6 +490,9 @@ ext.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
       msg.type === "IGNORE_PENDING" ||
       msg.type === "SAVE_MANUAL" ||
       msg.type === "GET_STATE" ||
+      msg.type === "GET_COMBINED" ||
+      msg.type === "TEST_CONNECTION" ||
+      msg.type === "LOGOUT" ||
       msg.type === "GET_SESSION" ||
       msg.type === "SAVE_SETTINGS")
   )

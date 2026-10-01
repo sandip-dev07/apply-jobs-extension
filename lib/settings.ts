@@ -4,12 +4,22 @@ export interface TrackerSettings {
   notionDatabaseId: string;
 }
 
-const KEY = "job-tracker-settings-v1";
+const KEY = "docket-settings-v1";
+// Previous key name — read once and migrate so existing installs keep their pick.
+const LEGACY_KEY = "job-tracker-settings-v1";
+
+function readRaw(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
 
 export function loadSettings(): TrackerSettings {
   if (typeof window === "undefined") return { notionDatabaseId: "" };
   try {
-    const raw = window.localStorage.getItem(KEY);
+    const raw = readRaw(KEY) ?? readRaw(LEGACY_KEY);
     if (!raw) return { notionDatabaseId: "" };
     const parsed = JSON.parse(raw) as Partial<TrackerSettings>;
     // Tolerate settings shapes from older versions.
@@ -33,6 +43,7 @@ export function saveSettings(s: TrackerSettings) {
 export function clearSettings() {
   try {
     window.localStorage.removeItem(KEY);
+    window.localStorage.removeItem(LEGACY_KEY);
   } catch {
     /* storage unavailable */
   }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDatabaseSchema, readCookie, resolveCredentialsFromRequest, searchDatabases, workspaceFromRequest, NOTION_TOKEN_COOKIE } from "@/lib/notion";
+import { getDatabaseSchema, readCookie, resolveCredentialsFromRequest, resolveUserToken, searchDatabases, workspaceFromRequest, NOTION_TOKEN_COOKIE } from "@/lib/notion";
 
 export const runtime = "nodejs";
 
@@ -61,11 +61,7 @@ export async function POST(req: Request) {
   } catch {
     body = {};
   }
-  const token =
-    body.token?.trim() ||
-    readCookie(req, NOTION_TOKEN_COOKIE) ||
-    process.env.NOTION_TOKEN?.trim() ||
-    "";
+  const token = resolveUserToken(req, body.token);
   if (!token) return NextResponse.json({ ok: false, error: "Sign in with Notion first, or provide a token." }, { status: 401 });
   const res = await searchDatabases(token);
   if (!res.ok) {

@@ -24,6 +24,8 @@ export default function SettingsPage() {
 
   // Load everything on mount: stored selection + available databases.
   useEffect(() => {
+    // One-time client-only hydration (localStorage + URL params).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDatabaseId(loadSettings().notionDatabaseId);
     try {
       const qs = new URLSearchParams(window.location.search);
@@ -145,25 +147,25 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">Settings</h1>
+      <main className="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col gap-4 px-4 py-6 sm:gap-6 sm:px-6 sm:py-8">
+        <div className="min-w-0">
+          <h1 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">Settings</h1>
           <p className="text-sm text-muted-foreground">
             One choice: where new applications go. Sign out anytime from the profile at the
             bottom of the sidebar.
           </p>
         </div>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
-            <CardTitle>Notion database</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Notion database</CardTitle>
             <CardDescription>New applications file into the selected database.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
+          <CardContent className="flex min-w-0 flex-col gap-3">
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading your databases…</p>
             ) : databases.length > 0 ? (
-              <div className="flex flex-col gap-1.5">
+              <div className="flex min-w-0 flex-col gap-1.5">
                 {databases.map((d) => {
                   const selected = d.id === databaseId;
                   return (
@@ -171,11 +173,11 @@ export default function SettingsPage() {
                       key={d.id}
                       type="button"
                       onClick={() => handlePick(d.id, d.title)}
-                      className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted ${
+                      className={`flex min-w-0 items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted ${
                         selected ? "border-primary bg-muted/50" : ""
                       }`}
                     >
-                      <span className="truncate font-medium">{d.title}</span>
+                      <span className="min-w-0 flex-1 truncate font-medium">{d.title}</span>
                       {selected ? (
                         <span className="shrink-0 rounded-md bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                           Selected
@@ -198,8 +200,8 @@ export default function SettingsPage() {
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-col gap-3 rounded-lg border border-dashed p-4">
-                <div className="flex flex-col gap-1.5">
+              <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-dashed p-3 sm:p-4">
+                <div className="flex min-w-0 flex-col gap-1.5">
                   <Label htmlFor="dbTitle">Title</Label>
                   <Input
                     id="dbTitle"
@@ -208,16 +210,16 @@ export default function SettingsPage() {
                     placeholder="Job Applications"
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex min-w-0 flex-col gap-1.5">
                   <Label htmlFor="parent">Build inside</Label>
                   {parentPages.length > 0 ? (
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex max-h-56 min-w-0 flex-col gap-1.5 overflow-y-auto pr-0.5">
                       {parentPages.map((p) => (
                         <button
                           key={p.id}
                           type="button"
                           onClick={() => setParentId(p.id)}
-                          className={`rounded-lg border px-3 py-2 text-left text-sm hover:bg-muted ${
+                          className={`min-w-0 truncate rounded-lg border px-3 py-2 text-left text-sm hover:bg-muted ${
                             parentId === p.id ? "border-primary bg-muted/50" : ""
                           }`}
                         >
@@ -234,27 +236,27 @@ export default function SettingsPage() {
                     />
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => void handleCreateDb()} disabled={creating || !parentId.trim()}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <Button className="w-full sm:w-auto" onClick={() => void handleCreateDb()} disabled={creating || !parentId.trim()}>
                     {creating ? "Creating…" : "Create & select"}
                   </Button>
-                  <Button variant="ghost" onClick={() => setShowCreate(false)}>
+                  <Button variant="ghost" className="w-full sm:w-auto" onClick={() => setShowCreate(false)}>
                     Cancel
                   </Button>
                 </div>
               </div>
             )}
 
-            {note ? <p className="text-sm text-muted-foreground">{note}</p> : null}
+            {note ? <p className="text-sm break-words text-muted-foreground">{note}</p> : null}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
-            <CardTitle>What gets saved</CardTitle>
+            <CardTitle className="text-base sm:text-lg">What gets saved</CardTitle>
             <CardDescription>For reference — the saver adapts to your schema automatically.</CardDescription>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
+          <CardContent className="text-sm break-words text-muted-foreground">
             <p>
               Company, Job Title, Status, Job URL, Application URL, Location, Source, Applied
               Date, Description, Notes. Missing properties are skipped, never error.
